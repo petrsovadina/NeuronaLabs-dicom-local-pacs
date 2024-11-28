@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.healthcare-app.com
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__SupabaseConnection=your-supabase-connection-string
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+    depends_on:
+      - orthanc
+
+  orthanc:
+    image: jodogne/orthanc-plugins:latest
+    ports:
+      - "4242:4242"
+      - "8042:8042"
+    volumes:
+      - orthanc_data:/var/lib/orthanc/db
+    environment:
+      - ORTHANC__NAME=ProductionOrthanc
+      - ORTHANC__DICOM_SERVER_ENABLED=true
+      - ORTHANC__DICOM_MODALITIES={"sample":["SAMPLE","127.0.0.1",104]}
+
+volumes:
+  orthanc_data:
